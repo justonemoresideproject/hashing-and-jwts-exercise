@@ -1,3 +1,11 @@
+const { json } = require("body-parser");
+const { authenticateJWT, ensureLoggedIn, ensureCorrectUser} = require("../middleware/auth")
+const express = require("express");
+
+const Messages = require(".models/message")
+const User = require("./models/user");
+const router = new express.Router();
+
 /** GET /:id - get detail of message.
  *
  * => {message: {id,
@@ -7,10 +15,17 @@
  *               from_user: {username, first_name, last_name, phone},
  *               to_user: {username, first_name, last_name, phone}}
  *
- * Make sure that the currently-logged-in users is either the to or from user.
+ * Make sure that the currently-logged-in user is either the to or from user.
  *
  **/
-
+router.get('/:id', ensureCorrectUser, async (req, res, next) => {
+    try {
+        const res = await Messages.get(req.params.id)
+        return res.json({res})
+    } catch (e) {
+        return next(e)
+    }
+})
 
 /** POST / - post message.
  *
@@ -19,6 +34,14 @@
  *
  **/
 
+router.post('/', ensureLoggedIn, async (req, res, next) => {
+    try {
+        const res = await Messages.create(req.body)
+        return res.json({res})
+    } catch (e) {
+        return next(e)
+    }
+})
 
 /** POST/:id/read - mark message as read:
  *
@@ -28,3 +51,11 @@
  *
  **/
 
+router.post('/:id/read', ensureCorrectUser, async (req, res, next) => {
+    try {
+        const res = await Messages.markRead(req.params.id)
+        return res.json({res})
+    } catch (e) {
+        return next(e)
+    }
+})
